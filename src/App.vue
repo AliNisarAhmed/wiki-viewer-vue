@@ -14,8 +14,11 @@
       <div v-if="isLoading" class="loading-icon-parent">
         <div class="loading-icon"></div>
       </div>
+      <div v-else-if="isError">
+        <h6>Error Loading results from wikipedia, please try again... </h6>
+      </div>
       <div v-else-if="!isLoading" class="result-list">
-        <Results v-for="result in results" :key="result.pageid" :resultTitle="result.title"></Results>
+        <Results v-for="(result, index) in results" :key="result.pageid" :result="result" :index="index"></Results>
       </div>
     </div>
   </div>
@@ -36,6 +39,7 @@ export default {
       searchField: "",
       isLoading: false,
       results: null,
+      isError: false,
     }
   },
   methods: {
@@ -45,12 +49,18 @@ export default {
     },
     async handleFormSubmit () {
       this.results = null;
+      this.isError = false;
       let searchTerm = this.searchField;
       this.searchField = "";
       this.isLoading = true;
       let res = await Axios.get(`https://cors-anywhere.herokuapp.com/https://en.wikipedia.org/w/api.php?action=query&format=json&list=search&utf8=1&srsearch=${encodeURI(searchTerm)}`);
-      this.isLoading = false;
       console.log(res);
+      if (!res.data.query) {
+        this.isLoading = false;
+        this.isError = true;
+        return;
+      }
+      this.isLoading = false;
       this.results = res.data.query.search;
     }
   }
